@@ -1,0 +1,19 @@
+{
+  "name": "tiktok-giu-thanh-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "node --test \"test/*.test.js\"",
+    "tune": "node tools/tune.mjs",
+    "soak": "node --expose-gc tools/soak.mjs"
+  },
+  "dependencies": {
+    "@fontsource/be-vietnam-pro": "^5.1.1"
+  },
+  "devDependencies": {
+    "vite": "6.0.7"
+  }
+}

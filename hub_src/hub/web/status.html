@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TikTok Live Hub</title>
+<link rel="icon" href="/favicon.ico">
+<style>
+  :root { --bg:#f4f5f7; --card:#fff; --ink:#1b1f24; --muted:#667085; --line:#e4e7ec; --ok:#12805c; --bad:#c4320a;
+          --warn:#b54708; --accent:#3a5ccc; --accent-ink:#fff; --chip:#eef2ff; --side:#fff; --hover:#f0f2f6; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f1115; --card:#171a21; --ink:#e7e9ee; --muted:#98a2b3; --line:#2a2f3a;
+          --ok:#3ccb8f; --bad:#ff7a59; --warn:#f5b54a; --accent:#7c97ff; --accent-ink:#0f1115; --chip:#222a44; --side:#13161c; --hover:#1d212a; } }
+  * { box-sizing:border-box; }
+  html, body { height:100%; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:13.5px/1.45 "Segoe UI", system-ui, sans-serif; display:flex; overflow:hidden; }
+  nav { width:190px; flex:none; background:var(--side); border-right:1px solid var(--line); display:flex; flex-direction:column; padding:14px 10px; gap:2px; }
+  nav .brand { font-weight:700; font-size:15px; padding:4px 10px 12px; }
+  nav .brand small { display:block; font-weight:400; color:var(--muted); font-size:12px; }
+  nav button { all:unset; cursor:pointer; padding:8px 10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; }
+  nav button:hover { background:var(--hover); }
+  nav button.on { background:var(--chip); color:var(--accent); font-weight:600; }
+  nav .badge { font-size:11px; border-radius:9px; padding:0 7px; background:var(--line); color:var(--ink); }
+  nav .badge.bad { background:var(--bad); color:#fff; }
+  nav .foot { margin-top:auto; color:var(--muted); font-size:12px; padding:8px 10px 0; }
+  main { flex:1; overflow:auto; padding:18px 22px; }
+  .page { display:none; } .page.on { display:block; }
+  h2 { font-size:18px; margin:0 0 4px; } .sub { color:var(--muted); margin:0 0 14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:12px; }
+  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .grow { flex:1; }
+  table { width:100%; border-collapse:collapse; margin-top:8px; }
+  th, td { text-align:left; padding:5px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-weight:600; color:var(--muted); font-size:12px; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; background:var(--muted); }
+  .up { background:var(--ok); } .down { background:var(--bad); }
+  .ok { color:var(--ok); } .bad { color:var(--bad); } .warn { color:var(--warn); } .muted { color:var(--muted); }
+  .stats { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 4px; }
+  .stat { background:var(--chip); border-radius:8px; padding:5px 10px; min-width:84px; }
+  .stat b { font-size:16px; display:block; }
+  input, select, button, textarea { font:inherit; padding:6px 9px; border-radius:7px; border:1px solid var(--line); background:var(--bg); color:var(--ink); }
+  button { background:var(--accent); color:var(--accent-ink); border-color:transparent; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--accent); border-color:var(--line); }
+  button.danger { background:transparent; color:var(--bad); border-color:var(--line); }
+  button:disabled { opacity:.5; cursor:default; }
+  .form { display:grid; grid-template-columns:130px 1fr; gap:8px 10px; align-items:center; max-width:640px; }
+  .form label { color:var(--muted); }
+  .feed { height:calc(100vh - 150px); overflow:auto; font-size:13px; }
+  .ev { padding:3px 0; border-bottom:1px dashed var(--line); }
+  .ev .t, .log .t { color:var(--muted); font-variant-numeric:tabular-nums; margin-right:6px; }
+  .tag { display:inline-block; font-size:11px; padding:0 6px; border-radius:5px; background:var(--chip); margin-right:6px; }
+  .tag.gift { background:#fde7c7; color:#7a3e00; } .tag.gap { background:#fee4e2; color:#7a1405; }
+  .log { font:12.5px/1.5 Consolas, "Cascadia Mono", monospace; white-space:pre-wrap; word-break:break-word; }
+  code, pre { font-family:Consolas, "Cascadia Mono", monospace; background:var(--chip); border-radius:6px; }
+  code { padding:1px 5px; } pre { padding:10px 12px; overflow:auto; margin:8px 0; }
+  .chname { font-weight:600; font-size:15px; }
+  .av { width:18px; height:18px; border-radius:50%; vertical-align:-4px; margin-right:5px; object-fit:cover; }
+  #toast { position:fixed; right:18px; bottom:18px; max-width:420px; padding:10px 14px; border-radius:9px; background:var(--ink); color:var(--bg);
+           opacity:0; transform:translateY(8px); transition:.2s; pointer-events:none; }
+  #toast.show { opacity:1; transform:none; } #toast.err { background:var(--bad); color:#fff; }
+  .empty { color:var(--muted); padding:14px 0; }
+  /* inside the game's control window (?embed=1): the menu across the top, no title of its own */
+  .embed body { flex-direction:column; }
+  .embed nav { width:auto; flex-direction:row; flex-wrap:wrap; align-items:center; gap:4px; padding:8px 14px; border-right:0; border-bottom:1px solid var(--line); }
+  .embed nav .brand { display:none; }
+  .embed nav button { gap:8px; padding:6px 10px; }
+  .embed nav .foot { margin:0 0 0 auto; padding:0 4px; }
+  .embed main { padding:14px 22px; }
+  /* there, the channel is typed in the game's own page and tests have their own page: one place for each thing */
+  .embed #watch, .embed nav button[data-p="sim"], .embed nav button[data-p="games"] { display:none; }
+</style>
+<script>if (/[?&]embed\b/.test(location.search)) document.documentElement.classList.add("embed");</script>
+</head>
+<body>
+<nav>
+  <div class="brand">TikTok Live Hub<small id="ver">đang kết nối…</small></div>
+  <button data-p="overview" class="on">Tổng quan <span class="badge" id="b-ch">0</span></button>
+  <button data-p="proxy">Proxy <span class="badge" id="b-px">0</span></button>
+  <button data-p="events">Sự kiện</button>
+  <button data-p="sim">Giả lập</button>
+  <button data-p="log">Nhật ký</button>
+  <button data-p="games">Kết nối game <span class="badge" id="b-gm">0</span></button>
+  <button data-p="settings">Cài đặt</button>
+  <div class="foot" id="foot"></div>
+</nav>
+<main>
+  <div id="offline" class="card" style="display:none;border-color:var(--bad);color:var(--bad)">
+    <b>Không nối được hub.</b> <span id="offline-why"></span></div>
+  <!-- Tổng quan -->
+  <section class="page on" id="p-overview">
+    <h2>Kênh đang theo dõi</h2>
+    <p class="sub" id="ov-sub">Mỗi kênh có một kết nối qua mỗi proxy. Hai proxy thì một bên đổi IP, bên kia vẫn nhận.</p>
+    <form class="row card" id="watch"><input name="ch" class="grow" placeholder="ID kênh TikTok (không cần @)" required><button>Theo dõi</button></form>
+    <div id="channels"></div>
+  </section>
+
+  <!-- Proxy -->
+  <section class="page" id="p-proxy">
+    <h2>Proxy</h2>
+    <p class="sub">Chọn cách nối tới TikTok. Hub không bao giờ tự đổi từ cách này sang cách kia.</p>
+    <div class="card" id="mode">
+      <div class="row" style="gap:22px">
+        <label class="row"><input type="radio" name="mode" value="direct"><b>Nối thẳng</b><span class="muted">không dùng proxy</span></label>
+        <label class="row"><input type="radio" name="mode" value="proxy"><b>Qua proxy</b><span class="muted">không bao giờ dùng mạng của máy này</span></label>
+      </div>
+      <p class="muted" id="mode-note" style="margin:8px 0 0"></p>
+    </div>
+    <div class="row" style="margin-bottom:12px">
+      <button id="px-add">Thêm proxy</button>
+      <button class="ghost" id="px-imp-file">Nhập từ file…</button>
+    </div>
+    <div id="px-form" class="card" style="display:none">
+      <b id="px-form-title">Thêm proxy</b>
+      <div class="form" style="margin-top:10px">
+        <label>Tên</label><input id="f-name" placeholder="proxy1">
+        <label>Key</label><input id="f-key" type="password" autocomplete="off" placeholder="key của dịch vụ proxy xoay">
+        <label>Link đổi IP</label><input id="f-rotate" placeholder="ví dụ https://proxyxoay.shop/api/get.php?key=[keyxoay]&nhamang=random&tinhthanh=0&whitelist=">
+        <label>Loại</label><select id="f-type"><option>HTTP</option><option>SOCKS5</option></select>
+        <label>IP:cổng</label><input id="f-proxy" placeholder="để trống thì tự lấy từ link đổi IP">
+        <label>Tài khoản</label><input id="f-user" placeholder="để trống nếu proxy không cần đăng nhập">
+        <label>Mật khẩu</label><input id="f-pass" type="password" autocomplete="off">
+        <span></span><div class="row"><button id="f-save">Lưu</button><button class="ghost" id="f-cancel">Thôi</button>
+          <span class="muted">[keyxoay] hoặc {key} trong link được thay bằng key.</span></div>
+      </div>
+    </div>
+    <div id="proxies"></div>
+  </section>
+
+  <!-- Sự kiện -->
+  <section class="page" id="p-events">
+    <div class="row"><h2 class="grow">Sự kiện</h2><label class="muted"><input type="checkbox" id="ev-joins"> hiện cả vào phòng / like</label></div>
+    <div class="card feed" id="feed"><div class="empty">Chưa có sự kiện.</div></div>
+  </section>
+
+  <!-- Giả lập -->
+  <section class="page" id="p-sim">
+    <h2>Giả lập</h2>
+    <p class="sub">Làm game không cần mở live. Sự kiện giả đi qua đúng đường của sự kiện thật (đếm combo, seq) và có <code>sim: true</code>.
+      Kênh mới gõ ở đây chỉ dùng để giả lập, không kết nối TikTok.</p>
+    <div class="card"><div class="form" id="sim">
+      <label>Kênh</label><input id="s-ch" value="demo">
+      <label>Loại</label><select id="s-kind"><option value="comment">comment</option><option value="gift">quà</option><option value="join">vào phòng</option>
+        <option value="like">like</option><option value="follow">follow</option><option value="share">share</option></select>
+      <label>Người dùng</label><input id="s-user" value="tester">
+      <label>Comment</label><input id="s-text" value="Hà Nội">
+      <label>Tên quà</label><input id="s-gift" value="Rose">
+      <label>Xu mỗi quà</label><input id="s-dia" type="number" min="0" value="1">
+      <label>Số lượng</label><input id="s-count" type="number" min="1" value="5">
+      <span></span><div class="row"><button id="s-send">Gửi</button><span class="muted">Quà dưới 100 xu được gửi dạng combo.</span></div>
+    </div></div>
+  </section>
+
+  <!-- Nhật ký -->
+  <section class="page" id="p-log">
+    <div class="row"><h2 class="grow">Nhật ký</h2><button class="ghost" id="open-logs">Mở thư mục log</button></div>
+    <div class="card feed log" id="log"></div>
+  </section>
+
+  <!-- Cài đặt -->
+  <section class="page" id="p-settings">
+    <h2>Cài đặt</h2>
+    <p class="sub" id="cfg-where"></p>
+    <div class="card"><div class="form">
+      <label>Sign key Euler</label><input id="st-sign" type="password" autocomplete="off">
+      <span></span><div class="row"><span class="muted grow">Key miễn phí ở eulerstream.com. Không có thì dùng hạn mức ẩn danh, tính theo IP (của proxy, hoặc của máy này khi nối thẳng). Nên có khi một IP gánh từ 3 kênh.</span>
+        <button class="danger" id="st-sign-clear">Xóa key</button></div>
+      <label>Proxy mỗi kênh</label><input id="st-ppc" type="number" min="1" max="8" style="width:90px">
+      <span></span><span class="muted">Khi hub tự chia: 2 là đủ để một bên đổi IP thì bên kia vẫn nhận. Kênh chọn tay ở tab Tổng quan không bị ảnh hưởng.</span>
+      <label>Cổng</label><input id="st-port" type="number" min="1024" max="65535" style="width:110px">
+      <span></span><span class="muted">Đổi cổng có tác dụng khi mở lại ứng dụng; game phải nối vào cổng mới.</span>
+      <span></span><div><button id="st-save">Lưu cài đặt</button></div>
+    </div></div>
+    <div class="card">
+      <b>Mang sang máy khác</b>
+      <p class="muted" style="margin:6px 0">Key proxy được mã hóa theo tài khoản Windows của máy này: chép <code>config.json</code> sang máy khác sẽ không đọc được key.
+        Dùng <b>Xuất cấu hình</b> ra một file (proxy, key, kênh, cài đặt), mang sang máy mới rồi <b>Nhập cấu hình</b>.
+        File xuất ra chứa key ở dạng đọc được: giữ kín, xóa sau khi nhập xong.</p>
+      <div class="row"><button class="ghost" id="st-export">Xuất cấu hình…</button><button class="ghost" id="st-import">Nhập cấu hình…</button>
+        <button class="ghost" id="open-cfg2">Mở thư mục cấu hình</button></div>
+    </div>
+  </section>
+
+  <!-- Kết nối game -->
+  <section class="page" id="p-games">
+    <h2>Kết nối game</h2>
+    <p class="sub">Game trình duyệt trên máy này nối vào hub. Hub phải đang chạy (cửa sổ này mở).</p>
+    <div class="card">
+      <b>Thêm vào game</b>
+      <pre id="snippet"></pre>
+      <div class="row"><button class="ghost" id="copy-snippet">Chép đoạn mã</button><a id="demo-link" href="/demo" target="_blank">Mở game mẫu</a></div>
+    </div>
+    <div class="card">
+      <b>Trang mở bằng file://</b>
+      <p class="muted" style="margin:6px 0">Cần thêm <code>token</code> mới được giả lập hoặc mở kênh mới. Trang chạy ở <code>http://localhost</code> thì không cần.</p>
+      <div class="row"><code id="token">••••••</code><button class="ghost" id="show-token">Hiện</button><button class="ghost" id="copy-token">Chép</button></div>
+    </div>
+    <div class="card"><b>Game đang nối</b><div id="clients" class="empty">chưa có</div></div>
+    <div class="card"><b>Cấu hình</b><p class="muted" style="margin:6px 0" id="cfgpath"></p><button class="ghost" id="open-cfg">Mở thư mục</button></div>
+  </section>
+</main>
+<div id="toast"></div>
+<div id="chpx" class="card" style="display:none;position:fixed;left:50%;top:22%;transform:translateX(-50%);width:min(420px,90vw);z-index:5;box-shadow:0 12px 40px rgba(0,0,0,.35)">
+  <b id="chpx-title"></b>
+  <p class="muted" style="margin:6px 0">Tick proxy kênh này đi qua. Hai proxy khác key nhau thì một bên đổi IP, bên kia vẫn nhận.</p>
+  <div id="chpx-list" style="display:grid;gap:6px;margin:10px 0"></div>
+  <div class="row"><button id="chpx-save">Lưu</button><button class="ghost" id="chpx-auto">Để hub tự chia</button><span class="grow"></span><button class="ghost" id="chpx-close">Thôi</button></div>
+</div>
+
+<script src="/tiktok-live-hub.js"></script>
+<script>
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const dur = (s) => s == null ? "—" : s < 60 ? `${Math.round(s)} giây` : s < 3600 ? `${Math.round(s / 60)} phút` : `${(s / 3600).toFixed(1)} giờ`;
+  const app = () => window.pywebview && window.pywebview.api;      // only inside the app window
+  let last = null, token = "", editing = null;
+
+  function toast(msg, err) {
+    const t = $("#toast"); t.textContent = msg; t.className = "show" + (err ? " err" : "");
+    clearTimeout(toast.h); toast.h = setTimeout(() => t.className = "", err ? 6000 : 2500);
+  }
+
+  // ---------- tabs ----------
+  document.querySelectorAll("nav button").forEach((b) => b.onclick = () => {
+    document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("on", x === b));
+    document.querySelectorAll(".page").forEach((p) => p.classList.toggle("on", p.id === "p-" + b.dataset.p));
+  });
+
+  // ---------- the hub connection (this window is a game too) ----------
+  const hub = new TikTokLiveHub({ url: `ws://${location.host}/ws`, client: "cửa sổ hub" });
+  const subscribed = new Set();
+  hub.on("ok", (e) => {
+    if (e.op === "proxy_check") toast(`${e.name}: TikTok thấy IP ${e.ip || "?"}${e.where ? " (" + e.where + ")" : ""} · ${e.ms} ms${e.life || ""}`);
+    else if (e.op === "proxy_save") { toast(`Đã lưu ${e.name}`); closeForm(); }
+    else if (e.op === "config_import" || e.op === "settings_save") toast(e.message);
+    else if (e.op === "channel_proxies") { toast("Đã đổi proxy của kênh"); $("#chpx").style.display = "none"; }
+    else if (e.op === "proxy_remove") toast("Đã xóa proxy");
+    refresh();
+  });
+  hub.on("error", (e) => toast(e.message, true));
+  // an action while the hub is not reachable must say so, not do nothing
+  const rawSend = hub.send.bind(hub);
+  hub.send = (msg) => {
+    if (msg.op !== "subscribe" && !hub.connected) return toast("Chưa nối được hub: chưa làm được. Đợi vài giây rồi thử lại.", true);
+    rawSend(msg);
+  };
+  hub.on("*", addEvent);
+  hub.connect();
+
+  function who(u) {
+    if (!u) return "";
+    const av = u.avatar_hub ? `<img class="av" src="${esc(u.avatar_hub)}" alt="" loading="lazy" onerror="this.remove()">` : "";
+    return av + esc(u.nickname || u.unique_id) + (u.unique_id ? ` <span class="muted">@${esc(u.unique_id)}</span>` : "");
+  }
+  function addEvent(e) {
+    if (e.type === "viewers") return;
+    if (!$("#ev-joins").checked && (e.type === "join" || e.type === "like")) return;
+    const t = new Date(e.ts).toLocaleTimeString("vi-VN"), sim = e.sim ? '<span class="tag">giả lập</span>' : "";
+    let body;
+    switch (e.type) {
+      case "comment": body = `${who(e.user)}: ${esc(e.text)}`; break;
+      case "gift": body = `<span class="tag gift">+${e.coins} xu</span>${who(e.user)} +${e.count} ${esc(e.gift.name)}${e.combo_total > e.count ? ` · combo ${e.combo_total}` : ""}`; break;
+      case "gift_done": body = `<span class="tag gift">hết combo</span>${who(e.user)} tổng ${e.count} ${esc(e.gift.name)} = ${e.coins} xu${e.reason === "timeout" ? ' <span class="muted">(tự đóng: không thấy tín hiệu kết thúc)</span>' : ""}`; break;
+      case "gap": body = `<span class="tag gap">mất kết nối</span>${(e.ms / 1000).toFixed(1)} giây: tin trong khoảng này có thể thiếu`; break;
+      case "link": body = `<span class="dot ${e.up ? "up" : "down"}"></span>${esc(e.proxy)} ${e.up ? "lên" : "xuống"} · ${esc(e.reason)} · còn ${e.links_up}/${e.links} link`; break;
+      case "like": body = `${who(e.user)} like ×${e.count}`; break;
+      default: body = `${who(e.user)} <span class="muted">${esc(e.type)}${e.room_id ? " · room " + e.room_id : ""}</span>`;
+    }
+    const f = $("#feed"), stick = f.scrollTop + f.clientHeight >= f.scrollHeight - 30;
+    if (f.querySelector(".empty")) f.innerHTML = "";
+    const d = document.createElement("div"); d.className = "ev";
+    d.innerHTML = `<span class="t">${t}</span><span class="tag">${esc(e.ch)}</span>${sim}${body}`;
+    f.appendChild(d);
+    while (f.children.length > 500) f.firstChild.remove();
+    if (stick) f.scrollTop = f.scrollHeight;
+  }
+
+  // ---------- status ----------
+  function render(s) {
+    last = s;
+    renderSettings(s);
+    $("#ver").textContent = `phiên bản ${s.hub} · cổng ${s.port}`;
+    $("#b-ch").textContent = s.channels.filter((c) => c.links.length).length;
+    // an older hub does not say `use_proxy`: it always went through proxies
+    const useProxy = s.settings.use_proxy !== false;
+    const pxBad = s.proxies.some((p) => p.error);
+    $("#b-px").textContent = useProxy ? s.proxies.length : "tắt";
+    $("#b-px").className = "badge" + (useProxy && (pxBad || !s.proxies.length) ? " bad" : "");
+    document.querySelectorAll('input[name="mode"]').forEach((r) => { r.checked = (r.value === "proxy") === useProxy; });
+    $("#mode-note").innerHTML = useProxy
+      ? (s.proxies.length ? "Mọi kết nối tới TikTok đi qua các proxy bên dưới. Hai proxy phải là hai key khác nhau."
+        : '<span class="warn">Chưa có proxy nào nên chưa nhận được gì: thêm proxy, hoặc chọn Nối thẳng.</span>')
+      : "Đang nối thẳng từ mạng của máy này: TikTok thấy IP của máy. Đủ dùng cho một kênh. Server ký tính hạn mức theo IP: nếu hay báo quá giới hạn, thêm sign key miễn phí ở tab Cài đặt, hoặc dùng proxy."
+        + (s.direct && s.direct.error ? ` <span class="bad">${esc(s.direct.state)}</span>` : "")
+        + (s.proxies.length ? " Các proxy bên dưới đang không được dùng." : "");
+    $("#ov-sub").textContent = useProxy ? "Mỗi kênh có một kết nối qua mỗi proxy. Hai proxy thì một bên đổi IP, bên kia vẫn nhận."
+      : "Đang nối thẳng, không dùng proxy: mỗi kênh một kết nối (đổi ở tab Proxy).";
+    const games = s.clients.filter((c) => c.name !== "cửa sổ hub");
+    $("#b-gm").textContent = games.length;
+    const live = s.channels.filter((c) => c.live).length;
+    $("#foot").innerHTML = `${live ? `<span class="ok">● ${live} kênh đang live</span>` : "không kênh nào đang live"}`;
+
+    // channels
+    $("#channels").innerHTML = s.channels.map((c) => {
+      const st = c.stats;
+      return `<div class="card">
+        <div class="row"><span class="chname">@${esc(c.name)}</span>
+          <span class="${c.live ? "ok" : "muted"}">${c.live ? "● đang live" : c.links.length ? "chưa live" : "chỉ giả lập"}</span>
+          ${c.viewers ? `<span class="muted">· ${c.viewers} người xem</span>` : ""}
+          ${c.gap_open_s != null ? `<span class="bad">· đang mất kết nối ${c.gap_open_s} giây</span>` : ""}
+          <span class="grow"></span>${c.real && useProxy ? `<button class="ghost" data-chpx="${esc(c.name)}">Chọn proxy</button>` : ""}<button class="ghost" data-unwatch="${esc(c.name)}">Thôi theo dõi</button></div>
+        ${!c.real ? "" : !useProxy ? '<div class="muted" style="margin-top:4px">Nối thẳng, không qua proxy</div>'
+          : `<div class="muted" style="margin-top:4px">Proxy: ${c.links.map((l) => esc(l.proxy)).join(", ") || "chưa có"} · ${c.auto ? "hub tự chia" : "chọn tay"}</div>`}
+        <div class="stats">
+          <div class="stat"><b>${st.comments}</b>comment</div><div class="stat"><b>${st.coins.toLocaleString("vi-VN")}</b>xu</div>
+          <div class="stat"><b>${st.duplicates_skipped}</b>tin trùng đã bỏ</div>
+          <div class="stat"><b class="${st.gaps ? "warn" : ""}">${st.gaps}</b>lần hụt · ${(st.gap_ms / 1000).toFixed(0)} giây</div>
+        </div>
+        ${c.links.length ? `<table><thead><tr><th>Link</th><th>Trạng thái</th><th>Im lặng</th><th>Heartbeat</th><th>Kết nối / nối lại</th></tr></thead><tbody>
+        ${c.links.map((l) => `<tr><td><span class="dot ${l.up ? "up" : "down"}"></span>${esc(l.proxy)}</td>
+          <td>${esc(l.state)}${l.last_reason ? `<div class="muted">lần trước: ${esc(l.last_reason)}</div>` : ""}</td>
+          <td>${l.quiet_s == null ? "—" : l.quiet_s + " giây"}</td><td>${l.heartbeat ? `<span class="ok">có</span> · ${l.raw_frames}` : '<span class="muted">—</span>'}</td>
+          <td>${l.connects} / ${l.reconnects}</td></tr>`).join("")}</tbody></table>`
+          : (!useProxy || s.proxies.length || !c.real ? "" : '<p class="warn">Chưa có proxy: thêm ở tab Proxy, hoặc chọn Nối thẳng ở đó.</p>')}
+      </div>`;
+    }).join("") || `<div class="empty">Chưa theo dõi kênh nào. ${document.documentElement.classList.contains("embed")
+      ? "Kênh được nhập ở trang của game (thẻ đầu tiên)." : "Gõ ID kênh ở trên."}</div>`;
+
+    // proxies
+    $("#proxies").innerHTML = s.proxies.map((p) => `<div class="card">
+      <div class="row"><b>${esc(p.name)}</b><span class="muted">${esc(p.type)} ${esc(p.proxy || "chưa có IP:cổng")}</span>
+        <span class="${p.error ? "bad" : p.state === "chạy" ? "ok" : "warn"}">· ${esc(p.error || p.state)}</span>
+        <span class="grow"></span>
+        <button class="ghost" data-check="${esc(p.name)}">Kiểm tra</button><button class="ghost" data-edit="${esc(p.name)}">Sửa</button>
+        <button class="danger" data-del="${esc(p.name)}">Xóa</button></div>
+      <table><tr><th>IP TikTok thấy</th><th>Còn sống</th><th>Đã dùng</th><th>Độ trễ</th><th>Đổi IP tự động</th></tr>
+        <tr><td>${esc(p.ip || "—")}<div class="muted">${esc(p.where)}</div></td><td>${p.life_left_s == null ? '<span class="muted">chưa rõ</span>' : dur(p.life_left_s)}</td>
+          <td>${dur(p.age_s)}</td><td>${p.ms == null ? "—" : p.ms + " ms"}</td>
+          <td>${p.can_rotate ? '<span class="ok">có</span>' : '<span class="warn">không (thiếu key hoặc link)</span>'}</td></tr></table></div>`).join("")
+      || '<div class="empty">Chưa có proxy. Bấm "Thêm proxy" hoặc "Nhập từ file…".</div>';
+    if (useProxy && s.proxies.length === 1) $("#proxies").insertAdjacentHTML("beforeend", '<p class="muted">Có 1 proxy: mỗi lần IP chết hụt khoảng 10–15 giây. Thêm proxy thứ 2 (key khác) để gần như không hụt.</p>');
+    $("#px-imp-file").style.display = app() ? "" : "none";
+
+    // games
+    $("#clients").innerHTML = games.length ? games.map((c) => `<div>${esc(c.name || "?")} <span class="muted">${esc(c.origin || "")} · ${c.subs.map((x) => "@" + esc(x)).join(", ") || "chưa đăng ký kênh"}</span></div>`).join("") : "chưa có";
+    $("#cfgpath").textContent = s.config;
+    const ch = s.watched[0] || "tenkenh";
+    $("#snippet").textContent = `<script src="http://127.0.0.1:${s.port}/tiktok-live-hub.js"><\/script>\n<script>\n  const hub = new TikTokLiveHub({ channels: ["${ch}"], client: "ten-game" });\n  hub.on("comment",   e => console.log(e.user.nickname, e.text));\n  hub.on("gift",      e => console.log("+" + e.coins + " xu"));        // cộng ngay\n  hub.on("gift_done", e => console.log("hết combo", e.count, e.coins)); // quà / combo đã kết thúc\n  hub.connect();\n<\/script>`;
+    $("#demo-link").href = `/demo?ch=${encodeURIComponent(s.watched[0] || "demo")}`;
+
+    const names = s.channels.map((c) => c.name).filter((n) => !subscribed.has(n));
+    if (names.length) { names.forEach((n) => subscribed.add(n)); hub.subscribe(names); }
+  }
+  async function refresh() {
+    try {
+      render(await (await fetch("/api/status", { cache: "no-store" })).json());
+      $("#offline").style.display = "none";
+    } catch (e) {
+      $("#ver").textContent = "hub không trả lời";
+      $("#offline-why").textContent = `Hub ở cổng ${location.port} không trả lời. Nếu bạn vừa tắt một cửa sổ hub khác, cửa sổ này sẽ tự chạy hub riêng trong vài giây; nếu không, đóng cửa sổ này rồi mở lại ứng dụng.`;
+      $("#offline").style.display = "";
+    }
+  }
+  (async function loop() { await refresh(); setTimeout(loop, 1000); })();
+
+  let logAfter = 0;
+  (async function logLoop() {
+    try {
+      const lines = await (await fetch("/api/log?after=" + logAfter, { cache: "no-store" })).json();
+      const box = $("#log"), stick = box.scrollTop + box.clientHeight >= box.scrollHeight - 30;
+      for (const x of lines) {
+        logAfter = x.id;
+        const d = document.createElement("div");
+        d.innerHTML = `<span class="t">${x.t}</span>${esc(x.msg)}`;
+        if (/\[LỖI|không chạy|mất hết|hỏng/.test(x.msg)) d.className = "bad";
+        box.appendChild(d);
+      }
+      while (box.children.length > 800) box.firstChild.remove();
+      if (stick && lines.length) box.scrollTop = box.scrollHeight;
+    } catch (e) {}
+    setTimeout(logLoop, 1000);
+  })();
+
+  // ---------- actions ----------
+  $("#watch").onsubmit = (ev) => { ev.preventDefault(); const n = ev.target.ch.value.replace(/^@/, "").trim(); if (n) hub.watch(n); ev.target.reset(); setTimeout(refresh, 300); };
+  document.addEventListener("click", (ev) => {
+    const b = ev.target.closest("button"); if (!b) return;
+    if (b.dataset.chpx) openChpx(b.dataset.chpx);
+    if (b.dataset.unwatch && confirm(`Thôi theo dõi @${b.dataset.unwatch}?`)) { subscribed.delete(b.dataset.unwatch); hub.unwatch(b.dataset.unwatch); setTimeout(refresh, 300); }
+    if (b.dataset.check) { toast(`Đang kiểm tra ${b.dataset.check}…`); hub.send({ op: "proxy_check", name: b.dataset.check }); }
+    if (b.dataset.edit) openForm(last.proxies.find((p) => p.name === b.dataset.edit));
+    if (b.dataset.del && confirm(`Xóa ${b.dataset.del}? Các kết nối qua proxy này sẽ dừng.`)) hub.send({ op: "proxy_remove", name: b.dataset.del });
+  });
+
+  function openForm(p) {
+    editing = p ? p.name : null;
+    $("#px-form-title").textContent = p ? `Sửa ${p.name}` : "Thêm proxy";
+    let free = 1; const used = new Set((last ? last.proxies : []).map((x) => x.name));
+    while (used.has("proxy" + free)) free++;
+    $("#f-name").value = p ? p.name : "proxy" + free;
+    $("#f-key").value = ""; $("#f-key").placeholder = p && p.has_key ? "đã có (để trống = giữ nguyên)" : "key của dịch vụ proxy xoay";
+    $("#f-pass").value = ""; $("#f-pass").placeholder = p && p.has_password ? "đã có (để trống = giữ nguyên)" : "";
+    $("#f-rotate").value = p ? p.rotate_url : "";   // an example only as placeholder: a pre-filled link without key is refused
+    $("#f-type").value = p ? p.type : "HTTP"; $("#f-proxy").value = p ? p.proxy : ""; $("#f-user").value = p ? p.user : "";
+    $("#px-form").style.display = ""; $("#f-key").focus();
+  }
+  function closeForm() { $("#px-form").style.display = "none"; editing = null; }
+  // the list may be up to a second old (just saved one?): take the latest before proposing a free name
+  $("#px-add").onclick = async () => { await refresh(); openForm(null); };
+  $("#f-cancel").onclick = closeForm;
+  $("#f-save").onclick = () => hub.send({ op: "proxy_save", original: editing, proxy: {
+    name: $("#f-name").value.trim(), key: $("#f-key").value.trim(), rotate_url: $("#f-rotate").value.trim(), type: $("#f-type").value,
+    proxy: $("#f-proxy").value.trim(), user: $("#f-user").value.trim(), password: $("#f-pass").value } });
+  async function importConfig() { const path = await app().pick_json_file(); if (path) hub.send({ op: "config_import", path }); }
+  $("#px-imp-file").onclick = importConfig;
+  $("#st-import").onclick = () => app() ? importConfig() : toast("Chỉ dùng được trong cửa sổ ứng dụng", true);
+  $("#st-export").onclick = async () => {
+    if (!app()) return toast("Chỉ dùng được trong cửa sổ ứng dụng", true);
+    const path = await app().export_config(); if (path) toast("Đã xuất ra " + path + " (chứa key: giữ kín)");
+  };
+  let settingsShown = false;
+  function renderSettings(s) {
+    $("#cfg-where").textContent = (s.portable ? "Chế độ mang theo: cấu hình nằm cạnh exe · " : "Cấu hình lưu ở ") + s.config;
+    $("#st-sign").placeholder = s.settings.sign_api_key_set ? "đã có (để trống = giữ nguyên)" : "chưa có";
+    $("#st-sign-clear").style.display = s.settings.sign_api_key_set ? "" : "none";
+    if (!settingsShown) { $("#st-ppc").value = s.settings.proxies_per_channel; $("#st-port").value = s.settings.port; settingsShown = true; }
+  }
+  $("#st-save").onclick = () => hub.send({ op: "settings_save", sign_api_key: $("#st-sign").value.trim(),
+                                           proxies_per_channel: +$("#st-ppc").value, port: +$("#st-port").value });
+  $("#st-sign-clear").onclick = () => confirm("Xóa sign key Euler?") && hub.send({ op: "settings_save", clear_sign_key: true });
+  $("#open-cfg2").onclick = () => app() ? app().open_folder("config") : toast(last && last.config);
+
+  // which way to TikTok. Leaving proxies that are set up is asked once more: from then on TikTok sees this computer's IP
+  document.querySelectorAll('input[name="mode"]').forEach((r) => r.onchange = () => {
+    const proxy = r.value === "proxy";
+    if (!proxy && last && last.proxies.length && !confirm("Nối thẳng, không dùng proxy?\nTikTok sẽ thấy IP mạng của máy này. Các proxy vẫn được giữ, bật lại lúc nào cũng được.")) return refresh();
+    hub.send({ op: "settings_save", use_proxy: proxy });
+  });
+
+  let chpxName = null;
+  function openChpx(name) {
+    const c = last.channels.find((x) => x.name === name); if (!c) return;
+    chpxName = name;
+    const using = new Set(c.links.map((l) => l.proxy));
+    $("#chpx-title").textContent = `Proxy của @${name}`;
+    $("#chpx-list").innerHTML = last.proxies.map((p) => `<label class="row"><input type="checkbox" value="${esc(p.name)}" ${using.has(p.name) ? "checked" : ""}>
+      <b>${esc(p.name)}</b><span class="muted">${esc(p.proxy || "")} · ${esc(p.error || p.state)}</span></label>`).join("") || '<span class="muted">Chưa có proxy nào.</span>';
+    $("#chpx").style.display = "";
+  }
+  $("#chpx-save").onclick = () => {
+    const picked = [...document.querySelectorAll("#chpx-list input:checked")].map((x) => x.value);
+    if (!picked.length) return toast("Chọn ít nhất một proxy", true);
+    hub.send({ op: "channel_proxies", ch: chpxName, proxies: picked });
+  };
+  $("#chpx-auto").onclick = () => hub.send({ op: "channel_proxies", ch: chpxName, proxies: null });
+  $("#chpx-close").onclick = () => $("#chpx").style.display = "none";
+
+  $("#s-send").onclick = () => {
+    const ch = $("#s-ch").value.replace(/^@/, "").trim(); if (!ch) return;
+    if (!subscribed.has(ch)) { subscribed.add(ch); hub.send({ op: "subscribe", channels: [ch], sim_only: true, client: hub.client }); }
+    hub.simulate(ch, { kind: $("#s-kind").value, user: $("#s-user").value, text: $("#s-text").value, gift: $("#s-gift").value,
+                       diamonds: +$("#s-dia").value, count: +$("#s-count").value });
+    toast("Đã gửi, xem ở tab Sự kiện");
+  };
+
+  // copying: through the app (Windows clipboard) in the window, the browser API elsewhere, the old way as a last resort
+  async function copyText(text, what) {
+    try {
+      if (app() && await app().copy(text)) return toast("Đã chép " + what);
+      await navigator.clipboard.writeText(text); return toast("Đã chép " + what);
+    } catch (e) {
+      const t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select();
+      const ok = document.execCommand("copy"); t.remove();
+      toast(ok ? "Đã chép " + what : "Không chép được: hãy bôi đen rồi Ctrl+C", !ok);
+    }
+  }
+  $("#copy-snippet").onclick = () => copyText($("#snippet").textContent, "đoạn mã");
+  async function getToken() { if (!token) token = app() ? await app().token() : ""; return token; }
+  $("#show-token").onclick = async () => { const t = await getToken(); $("#token").textContent = t || "chỉ xem được trong cửa sổ ứng dụng"; };
+  $("#copy-token").onclick = async () => { const t = await getToken(); if (t) copyText(t, "token"); else toast("Chỉ chép được trong cửa sổ ứng dụng", true); };
+  $("#open-logs").onclick = () => app() ? app().open_folder("logs") : toast("Thư mục log: " + (last && last.logs), false);
+  $("#open-cfg").onclick = () => app() ? app().open_folder("config") : toast(last && last.config);
+  window.addEventListener("pywebviewready", refresh);
+  { // ?p=proxy: open on that page (the game's control window sends people straight to the proxies)
+    const p0 = new URLSearchParams(location.search).get("p");
+    const b0 = p0 && [...document.querySelectorAll("nav button")].find((b) => b.dataset.p === p0);
+    if (b0) b0.click();
+  }
+</script>
+</body>
+</html>

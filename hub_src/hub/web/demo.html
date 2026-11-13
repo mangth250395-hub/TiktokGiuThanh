@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo game · TikTok Live Hub</title>
+<link rel="icon" href="/favicon.ico">
+<style>
+  :root { --bg:#0e1320; --card:#161d2e; --ink:#eef1f7; --muted:#93a0b8; --gold:#ffc65c; --line:#26304a; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, "Segoe UI", sans-serif; }
+  .wrap { max-width:880px; margin:0 auto; padding:20px 16px; display:grid; grid-template-columns:1fr 280px; gap:16px; }
+  @media (max-width:760px) { .wrap { grid-template-columns:1fr; } }
+  h1 { font-size:18px; margin:0 0 4px; } .muted { color:var(--muted); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
+  #feed div { padding:3px 0; } .gift { color:var(--gold); }
+  #board div { display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--line); }
+  #say { font-size:20px; min-height:30px; color:var(--gold); }
+  button { font:inherit; padding:6px 10px; border-radius:8px; border:0; background:#3a5ccc; color:#fff; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <h1>Demo game</h1>
+    <p class="muted">Kênh: <b id="ch"></b> · <span id="conn">đang nối hub…</span> · đổi kênh bằng <code>?ch=tenkenh</code></p>
+    <div id="say" class="card"></div>
+    <p><button id="t1">Giả lập comment</button> <button id="t2">Giả lập combo 10 Rose</button> <button id="t3">Giả lập 1 Lion</button></p>
+    <div id="feed" class="card"></div>
+  </div>
+  <div class="card"><b>Bảng xu</b><div id="board"></div></div>
+</div>
+<script src="/tiktok-live-hub.js"></script>
+<script>
+  // 1. connect: the channel, a name for this game
+  const ch = new URLSearchParams(location.search).get("ch") || "demo";
+  document.getElementById("ch").textContent = "@" + ch;
+  const hub = new TikTokLiveHub({ url: `ws://${location.host}/ws`, channels: [ch], client: "demo game",
+                                  simOnly: ch === "demo" });   // "demo": simulation only, no TikTok connection
+  const coins = {};
+  const feed = (html) => { const d = document.createElement("div"); d.innerHTML = html; const f = document.getElementById("feed"); f.prepend(d); while (f.children.length > 60) f.lastChild.remove(); };
+  // EVERYTHING that comes from TikTok (names, comments, gift names) is text typed by strangers: never put it in
+  // innerHTML as is, or a comment like <img onerror=...> runs code in this page
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const name = (u) => esc(u.nickname || u.unique_id);
+  // the avatar through the hub (u.avatar_hub): usable in <img>, on a canvas and as a WebGL texture (CORS allowed)
+  const pic = (u) => u.avatar_hub ? `<img src="${esc(u.avatar_hub)}" alt="" width="20" height="20" style="border-radius:50%;vertical-align:-5px;margin-right:6px" onerror="this.remove()">` : "";
+
+  // 2. the events
+  hub.on("open", () => document.getElementById("conn").textContent = "đã nối hub");
+  hub.on("close", () => document.getElementById("conn").textContent = "mất kết nối hub, đang nối lại…");
+  hub.on("comment", (e) => feed(`${pic(e.user)}<b>${name(e.user)}</b>: ${esc(e.text)}`));
+  hub.on("gift", (e) => {                       // coins NOW (a combo comes in parts)
+    coins[name(e.user)] = (coins[name(e.user)] || 0) + e.coins;
+    feed(`<span class="gift">+${e.coins} xu</span> ${name(e.user)} (${esc(e.gift.name)} x${e.combo_total})`);
+    board();
+  });
+  hub.on("gift_done", (e) => {                  // the gift / combo is over: its totals (what to do with it: the game's call)
+    document.getElementById("say").textContent = `Hết combo: ${e.user.nickname || e.user.unique_id} · ${e.count} ${e.gift.name} = ${e.coins} xu`;
+  });
+  hub.on("gap", (e) => feed(`<span class="muted">mất kết nối TikTok ${(+e.ms / 1000).toFixed(1)} giây</span>`));
+  hub.connect();
+
+  function board() {
+    document.getElementById("board").innerHTML = Object.entries(coins).sort((a, b) => b[1] - a[1]).slice(0, 10)
+      .map(([n, c]) => `<div><span>${n}</span><b>${c}</b></div>`).join("");
+  }
+  // 3. simulation, to make the game without a live
+  document.getElementById("t1").onclick = () => hub.comment(ch, "an", "Hà Nội");
+  document.getElementById("t2").onclick = () => hub.gift(ch, "binh", "Rose", 1, 10);
+  document.getElementById("t3").onclick = () => hub.gift(ch, "chi", "Lion", 29999, 1);
+</script>
+</body>
+</html>

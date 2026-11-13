@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Điều khiển · Giữ thành</title>
+  <link rel="icon" href="/icon.png" />
+</head>
+<body>
+  <!-- What is always in sight: how the match stands, and the tabs. The rest is one tab at a time (it was one page of
+       2 500 pixels where every button looked the same; the user, 11/11/2026: "phần chỉnh trong control cũng cần
+       thiết kế lại"). -->
+  <header id="top">
+    <div class="bar">
+      <img src="/icon.png" alt="" />
+      <h1>Giữ thành <span>Điều khiển</span></h1>
+      <small id="version"></small>
+      <span id="saved" class="saved">Thay đổi được lưu ngay</span>
+    </div>
+
+    <div id="board" class="board off">
+      <div class="conn"><i class="dot"></i><span id="st-conn">Đang đọc trạng thái…</span><span id="st-chan"></span></div>
+      <div class="score">
+        <div class="side d"><b>Thành Xanh</b><span id="st-d">0 người</span></div>
+        <div class="mid">
+          <div class="pts"><b id="st-wd">0</b><i>:</i><b id="st-wa">0</b></div>
+          <span id="st-match">Trận –</span>
+        </div>
+        <div class="side a"><b>Quân Đỏ</b><span id="st-a">0 người</span></div>
+      </div>
+      <div class="meta">
+        <div class="hall"><span>Lâu đài</span><div class="track"><i id="st-hall"></i></div><b id="st-hallp">–</b></div>
+        <span id="st-wave"></span>
+      </div>
+      <div id="st-say" class="say"></div>
+    </div>
+
+    <nav class="tabs" role="tablist">
+      <button data-tab="live" role="tab" class="on">Trực tiếp</button>
+      <button data-tab="hub" role="tab">Kết nối<i class="dot" id="nav-hub"></i></button>
+      <button data-tab="match" role="tab">Trận &amp; điểm</button>
+      <button data-tab="sound" role="tab">Âm thanh</button>
+      <button data-tab="test" role="tab">Thử</button>
+      <button data-tab="replay" role="tab">Phát lại</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ================= while live ================= -->
+    <section class="tab on" data-tab="live">
+      <div class="card">
+        <h2>Kênh TikTok</h2>
+        <div class="row">
+          <div class="at"><span>@</span><input id="channel" placeholder="tenkenh" autocomplete="off" /></div>
+          <button id="save-channel" class="primary">Lưu kênh</button>
+        </div>
+        <!-- what the hub says about this very channel, and the way to TikTok (proxies, or straight) -->
+        <div id="ch-state" class="chstate">…</div>
+        <div class="row">
+          <span id="px-state" class="note grow"></span>
+          <button id="go-hub">Kết nối và proxy</button>
+        </div>
+        <div id="ch-others" class="others" hidden></div>
+      </div>
+
+      <div class="card">
+        <h2>Trận đang diễn ra</h2>
+        <div class="row">
+          <button id="pause" class="primary">Tạm dừng trận</button>
+          <span class="gap"></span>
+          <span class="note">Kết thúc ngay:</span>
+          <button id="end-d" class="d">Xanh thắng</button>
+          <button id="end-a" class="a">Đỏ thắng</button>
+        </div>
+        <hr />
+        <div class="act"><button id="reset-series" class="warn">Loạt mới</button><span>Về trận 1, tỉ số 0 : 0. Mọi người bình luận lại để có nhân vật.</span></div>
+        <div class="act"><button id="new-session" class="danger">Phiên mới</button><span>Xoá tất cả: người chơi, điểm, tỉ số. Không lấy lại được.</span></div>
+      </div>
+
+      <div class="card">
+        <h2>Bình luận viên đọc ngay</h2>
+        <div class="row">
+          <input id="say-text" class="grow" placeholder="Gõ một câu rồi nhấn Enter" />
+          <button id="say">Đọc</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Đưa lên live</h2>
+        <div class="row">
+          <button id="fit-game">Cửa sổ game 1080×1920</button>
+          <button id="open-data">Mở thư mục nhật ký</button>
+        </div>
+        <div id="fit-state" class="note"></div>
+        <p class="hint">Trong TikTok LIVE Studio hoặc OBS, thêm nguồn <b>Chụp cửa sổ</b> rồi chọn cửa sổ “Giữ thành” (khung 9:16).
+          Trong OBS, nếu hình bị đen, chọn kiểu chụp <b>Windows 10 (1903 trở lên)</b>. Tiếng bình luận phát ra loa của máy.</p>
+      </div>
+    </section>
+
+    <!-- ================= the hub's own page (the connection to TikTok: straight or through proxies), inside this
+         window: one window for everything, as in the map game ================= -->
+    <section class="tab full" data-tab="hub">
+      <div class="row hubbar">
+        <span id="hub-state2" class="note grow"></span>
+        <button id="open-hub" title="Nhập / xuất cấu hình, chép khoá: các việc cần cửa sổ riêng">Mở ở cửa sổ riêng</button>
+      </div>
+      <iframe id="hub-frame" title="Kết nối TikTok" hidden></iframe>
+      <div id="hub-none" class="card" hidden>
+        <h2>Phần kết nối TikTok chưa chạy</h2>
+        <p class="hint top" id="hub-none-why">Ứng dụng chưa chạy được phần kết nối TikTok. Đóng ứng dụng rồi mở lại; nếu vẫn vậy, xem file app.log (thẻ Trực tiếp, nút Mở thư mục nhật ký).</p>
+      </div>
+    </section>
+
+    <!-- ================= the match and the points ================= -->
+    <section class="tab" data-tab="match">
+      <div class="card">
+        <h2>Trận</h2>
+        <div class="grid2">
+          <label class="field"><span>Thời gian mỗi trận</span>
+            <select id="match-ms">
+              <option value="120000">2 phút</option><option value="180000">3 phút</option>
+              <option value="240000">4 phút</option><option value="300000">5 phút</option>
+              <option value="420000">7 phút</option><option value="600000">10 phút</option>
+            </select>
+          </label>
+          <label class="field"><span>Số trận mỗi loạt</span><input type="number" id="series" min="1" max="50" /></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Trên màn hình</h2>
+        <label class="sw"><input type="checkbox" id="quiz" /><span><b>Đố vui</b><small>Mỗi 35 giây một câu (đố vui, đố hiểu biết, đố mẹo). Người xem bình luận câu trả lời, tối đa 3 chữ.</small></span></label>
+        <div class="row indent"><button id="quiz-shuffle">Trộn lại câu hỏi</button></div>
+        <label class="sw"><input type="checkbox" id="legend" /><span><b>Bảng vật phẩm</b><small>Dòng “vật phẩm nào thành nhân vật gì” ở cuối màn hình.</small></span></label>
+      </div>
+
+      <div class="card">
+        <h2>Điểm xếp hạng</h2>
+        <p class="hint top">Điểm để xếp bảng TOP của trận. Riêng đố vui còn tính lên bậc: cứ đủ 10 điểm đố là lên một bậc
+          (để 10 thì đúng một câu lên một bậc).</p>
+        <div class="grid3 points">
+          <label class="field"><span>Vào đội</span><div class="unit"><input type="number" id="p-comment" min="0" max="1000" /><em>điểm</em></div></label>
+          <label class="field"><span>Thả tim</span><div class="unit"><input type="number" id="p-likes" min="1" max="1000" /><em>tim = 1 điểm</em></div></label>
+          <label class="field"><span>Vật phẩm</span><div class="unit"><input type="number" id="p-coin" min="0" max="1000" /><em>điểm mỗi xu</em></div></label>
+          <label class="field"><span>Chia sẻ</span><div class="unit"><input type="number" id="p-share" min="0" max="1000" /><em>điểm</em></div></label>
+          <label class="field"><span>Theo dõi</span><div class="unit"><input type="number" id="p-follow" min="0" max="1000" /><em>điểm</em></div></label>
+          <label class="field"><span>Đố vui đúng</span><div class="unit"><input type="number" id="p-quiz" min="0" max="1000" /><em>điểm</em></div></label>
+        </div>
+      </div>
+
+      <details class="card rules">
+        <summary><h2>Luật chơi tóm tắt</h2></summary>
+        <ul>
+          <li><b>Bình luận một lần là có một nhân vật cho cả loạt.</b> Gõ <b>thủ</b> hoặc <b>đánh</b> để chọn phe; câu khác thì game xếp vào phe ít người.</li>
+          <li><b>Mỗi vật phẩm thêm một quân</b> cho người tặng. Giá 1 / 5 / 10 / 20 / 30 / 99 ra Lính kiếm / Lính giáo / Cung thủ / Thầy thuốc / Đội trưởng / Tướng.
+            Mỗi người tối đa 30 quân; quá số đó thì món mới hồi đầy sức cho một quân.</li>
+          <li><b>Đố đúng:</b> Dân lên Lính kiếm; đúng nữa thì có thêm một Dân, rồi Dân đó cũng lên Lính kiếm (tối đa 2 quân không cần vật phẩm).
+            Cả hai đã là lính thì đố đúng hồi sức.</li>
+          <li><b>Tim, chia sẻ, theo dõi</b> hồi sức cho <b>một</b> quân đang yếu nhất của người đó: đủ 10 tim +5, chia sẻ +2, theo dõi +10.
+            Trong trận nộ thì tiếp sức cho khổng lồ của phe mình: đủ 10 tim +2, chia sẻ +1, theo dõi +5.</li>
+          <li><b>Quân từ bình luận ngã thì về làm Dân</b>, 20 giây một đợt quân là quay lại. <b>Quân từ vật phẩm ngã là mất.</b></li>
+          <li><b>Hết mỗi trận, quân còn là Dân thì nghỉ:</b> chủ của nó bình luận một câu mới ra tiếp. Quân có bậc và quân vật phẩm thì tự ra.</li>
+          <li><b>Hết loạt thì xoá hết:</b> ai chơi tiếp phải bình luận lại.</li>
+          <li>Hết giờ mà lâu đài còn đứng: <b>Thành Xanh thắng</b>. Lâu đài sập: <b>Quân Đỏ thắng</b>.</li>
+        </ul>
+      </details>
+
+      <div class="foot"><button id="reset-settings" class="warn">Đặt lại cài đặt mặc định</button><span class="note">Kênh vẫn giữ nguyên.</span></div>
+    </section>
+
+    <!-- ================= voice and sound ================= -->
+    <section class="tab" data-tab="sound">
+      <div class="card">
+        <h2>Bình luận viên</h2>
+        <label class="sw"><input type="checkbox" id="speech" /><span><b>Bật giọng đọc</b></span></label>
+        <label class="field"><span>Giọng</span>
+          <select id="voice">
+            <optgroup label="VieNeu (trên máy, tự nhiên)">
+              <option value="vieneu:Adam bựa">Adam bựa (nam, Bắc)</option>
+              <option value="vieneu:Adam">Adam (nam, Nam)</option>
+              <option value="vieneu:Hải Đăng">Hải Đăng (nam, Bắc)</option>
+              <option value="vieneu:Thiện Minh">Thiện Minh (nam, Bắc)</option>
+              <option value="vieneu:Minh Đức">Minh Đức (nam, Bắc)</option>
+              <option value="vieneu:Phạm Tuyên">Phạm Tuyên (nam, Bắc)</option>
+              <option value="vieneu:Xuân Vĩnh">Xuân Vĩnh (nam, Bắc)</option>
+              <option value="vieneu:Thanh Bình">Thanh Bình (nam, Bắc)</option>
+              <option value="vieneu:Quốc Tuấn">Quốc Tuấn (nam, Bắc)</option>
+              <option value="vieneu:Thiền Tâm Đức">Thiền Tâm Đức (nam, Bắc)</option>
+              <option value="vieneu:Quang Sơn">Quang Sơn (nam, Trung)</option>
+              <option value="vieneu:Thái Sơn">Thái Sơn (nam, Nam)</option>
+              <option value="vieneu:Minh Triết">Minh Triết (nam, Nam)</option>
+              <option value="vieneu:Đức Trí">Đức Trí (nam, Nam)</option>
+              <option value="vieneu:Trúc Ly">Trúc Ly (nữ, Bắc)</option>
+              <option value="vieneu:Mai Anh">Mai Anh (nữ, Bắc)</option>
+              <option value="vieneu:Ngọc Huyền">Ngọc Huyền (nữ, Bắc)</option>
+              <option value="vieneu:Ngọc Linh">Ngọc Linh (nữ, Bắc)</option>
+              <option value="vieneu:Đoan Trang">Đoan Trang (nữ, Bắc)</option>
+              <option value="vieneu:Quỳnh Anh">Quỳnh Anh (nữ, Bắc)</option>
+              <option value="vieneu:Ngọc Trân">Ngọc Trân (nữ, Trung)</option>
+              <option value="vieneu:Thùy Dung">Thùy Dung (nữ, Nam)</option>
+              <option value="vieneu:Thục Đoan">Thục Đoan (nữ, Nam)</option>
+              <option value="vieneu:Mỹ Duyên">Mỹ Duyên (nữ, Nam)</option>
+              <option value="vieneu:Kim Thanh">Kim Thanh (nữ, Nam)</option>
+            </optgroup>
+            <optgroup label="Edge (qua mạng)">
+              <option value="vi-VN-HoaiMyNeural">Hoài My (nữ)</option>
+              <option value="vi-VN-NamMinhNeural">Nam Minh (nam)</option>
+            </optgroup>
+          </select>
+        </label>
+        <div id="voice-state" class="note"></div>
+        <label class="slide"><span>Tốc độ</span><input type="range" id="rate" min="-30" max="40" step="5" /><output for="rate"></output></label>
+        <label class="slide"><span>Âm lượng</span><input type="range" id="volume" min="0" max="1" step="0.05" /><output for="volume"></output></label>
+      </div>
+
+      <div class="card">
+        <h2>Hiệu ứng âm thanh</h2>
+        <label class="sw"><input type="checkbox" id="sound" /><span><b>Bật hiệu ứng</b><small>Tù và, tiếng đánh, tiếng vật phẩm.</small></span></label>
+        <label class="slide"><span>Âm lượng</span><input type="range" id="sfx" min="0" max="1" step="0.05" /><output for="sfx"></output></label>
+      </div>
+    </section>
+
+    <!-- ================= tests, with no live ================= -->
+    <section class="tab" data-tab="test">
+      <p class="hint lead">Thử xong nhớ bấm <b>Phiên mới</b> (thẻ Trực tiếp) trước khi lên live thật.</p>
+
+      <div class="card feat">
+        <h2>Giả lập live đông</h2>
+        <p class="hint top">60 người tên đủ kiểu tự vào hai phe rồi liên tục thả tim, chia sẻ, theo dõi, bình luận, gửi vật phẩm đủ mức giá và trả lời đố.
+          Không cần hub. Tự dừng sau 12 phút.</p>
+        <div class="row">
+          <button id="demo-on" class="primary">Bắt đầu giả lập</button>
+          <button id="demo-rage" class="primary">Giả lập + vào trận nộ</button>
+          <span class="gap"></span>
+          <button id="demo-off">Dừng</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Người thử</h2>
+        <div class="row">
+          <button id="bots-5">+5 mỗi đội</button>
+          <button id="bots-20">+20 mỗi đội</button>
+          <button id="bots-like">Cho họ thả tim, trả lời đố</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Tặng vật phẩm thử</h2>
+        <p class="hint top">Không cần hub. Một người thử của phe đó nhận món giá ấy: có thẻ lớn “+1 …” và lời bình luận viên.</p>
+        <div class="tiers">
+          <span></span><em>Lính kiếm</em><em>Lính giáo</em><em>Cung thủ</em><em>Thầy thuốc</em><em>Đội trưởng</em><em>Tướng</em>
+          <b class="d">Xanh</b>
+          <button data-team="D" data-tier="1">1</button><button data-team="D" data-tier="5">5</button>
+          <button data-team="D" data-tier="10">10</button><button data-team="D" data-tier="20">20</button>
+          <button data-team="D" data-tier="30">30</button><button data-team="D" data-tier="99">99</button>
+          <b class="a">Đỏ</b>
+          <button data-team="A" data-tier="1">1</button><button data-team="A" data-tier="5">5</button>
+          <button data-team="A" data-tier="10">10</button><button data-team="A" data-tier="20">20</button>
+          <button data-team="A" data-tier="30">30</button><button data-team="A" data-tier="99">99</button>
+        </div>
+        <hr />
+        <div class="row">
+          <span class="note">Giá lẻ</span>
+          <input id="odd-coins" type="number" min="1" max="50000" value="50" />
+          <button id="odd-d" class="d">Xanh nhận</button>
+          <button id="odd-a" class="a">Đỏ nhận</button>
+        </div>
+        <p class="hint">Món không đúng sáu giá trên được chia thành nhiều quân cho vừa đủ giá, quân to trước:
+          50 = Đội trưởng + Thầy thuốc, 199 = 2 Tướng + 1 Lính kiếm, 7 = Lính giáo + 2 Lính kiếm.</p>
+      </div>
+
+      <div class="card">
+        <h2>Tình huống</h2>
+        <div class="row">
+          <button id="wave-now">Cho đợt quân ra ngay</button>
+          <span class="gap"></span>
+          <span class="note">Trận nộ, đang dẫn:</span>
+          <button id="rage-d" class="d">Xanh</button>
+          <button id="rage-a" class="a">Đỏ</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Một người xem giả, đi qua hub</h2>
+        <p class="hint top">Đặt kênh là <b>thu_nghiem</b>: hub không nối TikTok, chỉ nhận bình luận và vật phẩm giả gửi từ đây, y như thật.
+          Chưa mở hub thì các nút này vẫn chạy thẳng vào game.</p>
+        <div class="grid2">
+          <label class="field"><span>Tên người xem</span><input id="sim-user" value="Khách thử" /></label>
+          <label class="field"><span>Bình luận</span><input id="sim-text" value="thủ" /></label>
+        </div>
+        <div class="row">
+          <button id="sim-comment">Gửi bình luận</button>
+          <button id="sim-like">Thả 15 tim</button>
+          <button id="sim-share">Chia sẻ</button>
+          <button id="sim-follow">Theo dõi</button>
+        </div>
+        <div class="row">
+          <select id="sim-gift" class="grow">
+            <option value="Rose|1">Hoa hồng (1)</option><option value="Finger Heart|5">Tim ngón tay (5)</option>
+            <option value="Rosa|10">Bó hoa hồng (10)</option><option value="Perfume|20">Nước hoa (20)</option>
+            <option value="Doughnut|30">Bánh donut (30)</option><option value="Hand Hearts|99">Trái tim bàn tay (99)</option>
+          </select>
+          <span class="note">×</span>
+          <input id="sim-count" type="number" min="1" max="99" value="1" />
+          <button id="sim-gift-btn">Gửi vật phẩm</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= a past live, played again ================= -->
+    <section class="tab" data-tab="replay">
+      <div class="card">
+        <h2>Phát lại buổi live</h2>
+        <p class="hint top">Chọn một file log của hub (<code>%APPDATA%\TikTokLiveHub\logs\*.jsonl</code>): bình luận và vật phẩm
+          của buổi đó chạy lại trong game, đúng nhịp hoặc tua nhanh. Thử xong nhớ bấm <b>Phiên mới</b>.</p>
+        <div class="row">
+          <input type="file" id="replay-file" class="grow" accept=".jsonl,.json,.txt" />
+          <select id="replay-speed">
+            <option value="1">Tốc độ thật</option><option value="3">Nhanh ×3</option>
+            <option value="10" selected>Nhanh ×10</option><option value="30">Nhanh ×30</option>
+          </select>
+        </div>
+        <div class="row">
+          <button id="replay-start" class="primary">Phát lại</button>
+          <button id="replay-stop">Dừng</button>
+          <span id="replay-info" class="note"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="/src/control.js"></script>
+</body>
+</html>

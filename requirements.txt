@@ -1,0 +1,9 @@
+# Python 3.12. The exe is built with pyinstaller==6.16.0 (build.bat installs it).
+pywebview==6.2.1     # the two windows (WebView2, built into Windows 10 / 11)
+edge-tts==7.2.3      # the commentator's voice over the network (stands in while the voice below is not ready)
+vieneu==3.8.3        # the commentator's voice, made on this computer (CPU); its model (about 580 MB) is downloaded
+                     # once into %APPDATA%\TikTokGiuThanh\hf
+httpx[socks]==0.28.1
+# the hub (hub_src/), run inside the app: the connection to TikTok LIVE
+TikTokLive==7.0.1
+websockets==16.1.1

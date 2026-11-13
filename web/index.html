@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Giữ thành</title>
+  <link rel="icon" href="/icon.png" />
+</head>
+<body>
+  <div id="stage">
+    <canvas id="field"></canvas>
+    <div class="shade top"></div>
+    <div class="shade bottom"></div>
+
+    <div id="gfloats" aria-hidden="true" hidden><div class="ga" data-team="D"></div><div class="ga" data-team="A"></div></div>
+    <div id="cine" aria-hidden="true"></div>
+
+    <header id="top">
+      <div class="score">
+        <div class="team d">
+          <img class="crest" id="crest-d" alt="" src="/ts/ui/icon_shield.png" />
+          <div class="tinfo">
+            <div class="tname">THÀNH XANH</div>
+            <div class="tsub"><b>THỦ</b> · <span id="n-d">0</span> người</div>
+          </div>
+          <div class="army"><span><b id="on-d">0</b> trên sân</span><span class="w"><b id="wait-d">0</b> đang chờ</span></div>
+        </div>
+        <div class="mid">
+          <div class="wins"><b id="w-d" class="d">0</b><i>:</i><b id="w-a" class="a">0</b></div>
+          <div class="timer" id="timer">04:00</div>
+          <div class="match" id="match-box">TRẬN <b id="match-n">1</b>/<span id="match-of">5</span></div>
+        </div>
+        <div class="team a">
+          <img class="crest" id="crest-a" alt="" src="/ts/ui/icon_sword.png" />
+          <div class="tinfo">
+            <div class="tname">QUÂN ĐỎ</div>
+            <div class="tsub"><span id="n-a">0</span> người · <b>ĐÁNH</b></div>
+          </div>
+          <div class="army"><span class="w"><b id="wait-a">0</b> đang chờ</span><span><b id="on-a">0</b> trên sân</span></div>
+        </div>
+      </div>
+      <div id="howto">
+        <span class="cmd d"><i>gõ</i><b>THỦ</b><em>giữ thành</em></span>
+        <span class="cmd a"><i>gõ</i><b>ĐÁNH</b><em>phá thành</em></span>
+        <span class="cmd g"><i>gõ</i><b>ĐỔI</b><em>đổi phe</em></span>
+      </div>
+      <div id="hallbar">
+        <img class="hicon" id="castle-pic" alt="" />
+        <span class="lbl">LÂU ĐÀI</span>
+        <i class="track"><i class="slot"><i id="hall-fill"></i></i></i>
+        <b id="hall-pct">100%</b>
+        <div id="duel">
+          <div class="g d">
+            <img class="gi" src="/ts/ui/giant_blue.png" alt="" />
+            <i class="track"><i class="slot"><i id="duel-d"></i></i><b id="duel-pd">100%</b></i>
+          </div>
+          <span class="vs">VS</span>
+          <div class="g a">
+            <i class="track"><i class="slot"><i id="duel-a"></i></i><b id="duel-pa">100%</b></i>
+            <img class="gi" src="/ts/ui/giant_red.png" alt="" />
+          </div>
+        </div>
+        <span id="wave"><i>RA TRẬN SAU</i><b id="wave-n">30</b><i class="s">giây</i></span>
+      </div>
+      <section id="people">
+        <h3><span data-icon="crown"></span><span id="people-title">TOP TRẬN NÀY</span></h3>
+        <ol id="people-list"></ol>
+      </section>
+    </header>
+
+    <div id="status" hidden></div>
+    <div id="callout" hidden></div>
+    <div id="banner" hidden></div>
+    <div id="result" hidden></div>
+    <div id="break" hidden>
+      <div class="next"></div>
+      <div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" class="track" /><circle cx="50" cy="50" r="44" class="arc" /></svg><span class="n"></span></div>
+      <div class="hint">Ai đang là <b>Dân</b>: bình luận lại để ra trận</div>
+    </div>
+
+    <footer id="bottom">
+      <div class="cols">
+        <div id="side">
+          <div id="floats" aria-hidden="true"></div>
+          <div id="gifts"></div>
+        </div>
+        <div id="rcol">
+          <div id="free" hidden></div>
+        <section id="quiz" class="panel" hidden>
+          <div class="qhead"><span class="qi" data-icon="quiz"></span><h3>ĐỐ VUI</h3>
+            <div class="qwin"></div>
+            <div class="qring"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" class="track" /><circle cx="20" cy="20" r="17" class="arc" /></svg><span class="qn"></span></div>
+          </div>
+          <div class="qtext"></div>
+          <div class="qfast" hidden></div>
+          <div class="qfoot"></div>
+        </section>
+        </div>
+      </div>
+      <div id="legend"></div>
+    </footer>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

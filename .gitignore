@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# what the build makes
+build/
+dist/
+release/
+*.spec
+web/node_modules/
+web/dist/
+
+# a development run's own data (settings, session, a test hub's config and logs)
+.devhome/
+
+# the "Tiny Swords" packs as downloaded, and the pictures copied out of them (tools/prep_assets.py):
+# their licence does not allow passing them on. See README.md, "Hình ảnh".
+assets_src/
+web/public/ts/
+
+# working pictures (may show real viewers of a live)
+screenshots/
+
+# editors, tools
+.claude/
+.vscode/
+.idea/
+*.log
+Thumbs.db
